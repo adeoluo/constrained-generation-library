@@ -1,0 +1,53 @@
+---
+title: System Architecture - Constrained Generation Library
+config:
+  theme: base
+  themeVariables:
+    fontFamily: "Inter, system-ui, sans-serif"
+    primaryColor: "#F8FAFC"
+    primaryBorderColor: "#1E293B"
+    primaryTextColor: "#1E293B"
+    lineColor: "#64748B"
+    clusterBkg: "#EEF2FF"
+    clusterBorder: "#94A3B8"
+---
+flowchart TB
+    classDef edge     fill:#F59E0B,stroke:#1E293B,color:#1E293B,stroke-width:1px;
+    classDef core     fill:#6366F1,stroke:#1E293B,color:#ffffff,stroke-width:1px;
+    classDef data     fill:#10B981,stroke:#1E293B,color:#ffffff,stroke-width:1px;
+    classDef control  fill:#0EA5E9,stroke:#1E293B,color:#ffffff,stroke-width:1px;
+    classDef obs      fill:#CBD5E1,stroke:#1E293B,color:#1E293B,stroke-width:1px;
+
+    Client([Client]):::edge
+
+    subgraph Compile["Schema compilation (once)"]
+        direction TB
+        Schema[(JSON Schema<br/>typed, ordered properties)]:::data
+        Pattern["Regular expression"]:::core
+        NFA["Thompson NFA"]:::core
+        DFA["Lazy DFA<br/>epsilon-closed state sets"]:::core
+    end
+
+    subgraph Decode["Constrained decoding (per token)"]
+        direction TB
+        Model["Model scores<br/>over the vocabulary"]:::obs
+        Mask["Token mask<br/>keep tokens the automaton can still accept"]:::core
+        Pick["Pick highest-scoring allowed token"]:::control
+        Advance["Advance the automaton"]:::core
+    end
+
+    subgraph Edge["Service layer (stdlib HTTP)"]
+        direction TB
+        Router["Router<br/>/health | /ready | /metrics | /validate | /generate | /report"]:::core
+        Validate["Validation<br/>bounded text, non-negative seed"]:::control
+    end
+
+    Result["Schema-valid document"]:::obs
+
+    Schema --> Pattern --> NFA --> DFA
+    Model --> Mask --> Pick --> Advance
+    DFA -.->|allowed set| Mask
+    Advance -.->|next state| Mask
+    Client -->|request| Router --> Validate --> Decode
+    Advance --> Result
+    Result --> Router -->|JSON response| Client
