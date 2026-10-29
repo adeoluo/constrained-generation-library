@@ -157,12 +157,17 @@ construction. A controlled comparison against those libraries is the natural nex
 - The regular-expression engine supports a practical subset, not the full syntax (no backreferences
   or ``{n,m}`` counts); bounded repetition is expressed by expansion.
 - The JSON Schema compiler covers flat objects with the listed scalar types, not nested objects or
-  arrays.
+  arrays. Property names and enum values are matched against their exact JSON serialization, so keys
+  containing quotes, backslashes, or control characters are handled correctly.
+- String **values** are modelled as a bounded run of non-quote characters, which does not yet accept
+  JSON escape sequences inside the value (for example an embedded ``\"`` or ``\n``). This is a known
+  boundary of the value grammar, separate from key handling, and is noted in the roadmap.
 
 ## Roadmap
 
 - [ ] Benchmark against Outlines and Guidance on latency, schema coverage, and correctness over a real tokenizer vocabulary.
 - [ ] Support nested objects and arrays in the schema compiler.
+- [ ] Model full JSON string-value escaping (embedded ``\"``, ``\\``, ``\n``, ``\uXXXX``) in the value grammar.
 - [ ] Add a context-free grammar front end for non-regular structure.
 - [ ] Cache token masks per automaton state for faster decoding.
 

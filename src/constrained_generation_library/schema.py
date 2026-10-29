@@ -13,6 +13,7 @@ Supported types: ``string``, ``integer``, ``number``, ``boolean``, and ``enum``
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 
 from constrained_generation_library.regex import Regex
@@ -47,6 +48,21 @@ def _escape_literal(text: str) -> str:
     return "".join(out)
 
 
+def _json_string_literal(text: str) -> str:
+    """Return a regex fragment matching the exact JSON serialization of ``text``.
+
+    Property names and enum values appear in the output as JSON strings, so they
+    must be matched against their escaped serialization, not the raw text. For
+    example a property name containing a quote serializes to ``"a\\"b"`` and the
+    pattern has to match those literal characters. ``json.dumps`` produces the
+    escaping (quotes, backslashes, control characters) and ``_escape_literal``
+    then protects any regex metacharacters it introduced. Raw non-ASCII is kept
+    (``ensure_ascii=False``) to match the string-value convention.
+    """
+
+    return _escape_literal(json.dumps(text, ensure_ascii=False))
+
+
 def _value_pattern(prop: Property) -> str:
     if prop.type == "string":
         return '"' + _bounded_repeat('[^"]', prop.max_length) + '"'
@@ -60,7 +76,7 @@ def _value_pattern(prop: Property) -> str:
     if prop.type == "enum":
         if not prop.values:
             raise ValueError(f"enum property {prop.name!r} needs values")
-        alts = "|".join('"' + _escape_literal(v) + '"' for v in prop.values)
+        alts = "|".join(_json_string_literal(v) for v in prop.values)
         return f"({alts})"
     raise ValueError(f"unsupported type: {prop.type!r}")
 
@@ -72,7 +88,7 @@ def schema_to_pattern(properties: list[Property]) -> str:
         return r"\{\}"
     parts = []
     for prop in properties:
-        parts.append('"' + _escape_literal(prop.name) + '":' + _value_pattern(prop))
+        parts.append(_json_string_literal(prop.name) + ":" + _value_pattern(prop))
     return r"\{" + ",".join(parts) + r"\}"
 
 
