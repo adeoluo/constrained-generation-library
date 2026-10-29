@@ -67,6 +67,28 @@ def test_unsupported_type() -> None:
         schema_to_pattern([Property("x", "array")])
 
 
+def test_property_names_with_escapes_match_json_serialization() -> None:
+    # Property names containing characters that JSON must escape (quote,
+    # backslash, control characters) have to match their escaped serialization,
+    # not the raw text. Regression guard for the key-escaping defect.
+    for name in ('a"b', "a\\b", "a\nb", "tab\there", 'quote"and\\slash'):
+        regex = compile_schema([Property(name, "boolean")])
+        serialized = json.dumps({name: True}, ensure_ascii=False, separators=(",", ":"))
+        assert regex.fullmatch(serialized), serialized
+        # a different key must not match
+        wrong = json.dumps({name + "x": True}, ensure_ascii=False, separators=(",", ":"))
+        assert not regex.fullmatch(wrong)
+
+
+def test_enum_values_with_escapes_match_json_serialization() -> None:
+    values = ('re"d', "bl\\ue", "gr\nn")
+    regex = compile_schema([Property("color", "enum", values)])
+    for value in values:
+        serialized = json.dumps({"color": value}, ensure_ascii=False, separators=(",", ":"))
+        assert regex.fullmatch(serialized), serialized
+    assert not regex.fullmatch('{"color":"orange"}')
+
+
 def _schema() -> list[Property]:
     return [
         Property("name", "string", max_length=8),
