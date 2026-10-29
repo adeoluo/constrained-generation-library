@@ -140,6 +140,16 @@ method and tables: [`docs/EVALUATION_REPORT.md`](docs/EVALUATION_REPORT.md).
 - **Data card:** [`docs/DATA_CARD.md`](docs/DATA_CARD.md)
 - **Threat model:** [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md)
 
+## Comparison scope
+
+The results above compare constrained decoding against unconstrained decoding with random
+models over a bounded schema subset, not against an established constrained-decoding library.
+This project has **not** been benchmarked against [Outlines](https://github.com/dottxt-ai/outlines)
+or [Guidance](https://github.com/guidance-ai/guidance) on latency, schema coverage, or correctness
+over realistic tokenizer vocabularies, and it does not claim to beat them. What the result
+establishes is narrower and precise: automaton-based token masking makes output valid by
+construction. A controlled comparison against those libraries is the natural next step.
+
 ## Limitations
 
 - There is no language model here; a deterministic fake model stands in so the constraint can be
@@ -151,6 +161,7 @@ method and tables: [`docs/EVALUATION_REPORT.md`](docs/EVALUATION_REPORT.md).
 
 ## Roadmap
 
+- [ ] Benchmark against Outlines and Guidance on latency, schema coverage, and correctness over a real tokenizer vocabulary.
 - [ ] Support nested objects and arrays in the schema compiler.
 - [ ] Add a context-free grammar front end for non-regular structure.
 - [ ] Cache token masks per automaton state for faster decoding.
