@@ -65,6 +65,24 @@ Constrained decoding is valid **every time**; the same models, unconstrained, ar
 On average the automaton prunes about **83% of the vocabulary at each step**, which is exactly the
 mask that keeps generation on a legal path.
 
+### Scale
+
+> Reproduce with `uv run python benchmarks/scale.py`. Schemas of increasing field count, each with
+> enough decoding budget to complete the object; peak memory from `tracemalloc`.
+
+| Schema | Generations | Time | Throughput | Valid JSON |
+|---|---:|---:|---:|---:|
+| 4 fields | 60 | 4.5 s | ~13.4 gen/s | 60/60 |
+| 8 fields | 40 | 5.4 s | ~7.4 gen/s | 40/40 |
+| 12 fields | 30 | 5.7 s | ~5.3 gen/s | 30/30 |
+| 16 fields | 20 | 3.8 s | ~5.3 gen/s | 20/20 |
+
+Validity stays **100%** as the schema grows, because output is valid by construction; throughput
+falls because larger objects require more decoding steps, each masking the vocabulary against the
+automaton. Peak memory for a single 16-field generation is about 665 KiB. These are pure-Python
+numbers that show how the masking machinery scales, not competitive speed against a production
+constrained-decoding framework.
+
 ## Demonstration
 
 ```text
