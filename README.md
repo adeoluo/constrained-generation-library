@@ -83,6 +83,29 @@ automaton. Peak memory for a single 16-field generation is about 665 KiB. These 
 numbers that show how the masking machinery scales, not competitive speed against a production
 constrained-decoding framework.
 
+### Independent validation against jsonschema
+
+Internal consistency - "the output matches our own regex" - cannot catch a bug in the schema
+compiler itself. To rule that out, `tests/test_jsonschema_parity.py` cross-checks the compiled
+automaton against the standard [`jsonschema`](https://github.com/python-jsonschema/jsonschema)
+validator used as an independent oracle:
+
+- **Constrained outputs validate against the real schema.** Across 6 varied schemas and 40 random
+  models each, every constrained generation is parsed as JSON and validated against the equivalent
+  Draft 2020-12 JSON Schema. Measured result: **240/240 constrained outputs validate** against
+  `jsonschema`.
+- **The automaton accepts exactly what jsonschema accepts.** On **2,008 positive and negative
+  canonical-JSON examples** (8 hand-written plus 2,000 randomized), the compiled regex's
+  accept/reject decision agrees with `jsonschema` document-for-document, with **zero disagreements**.
+
+This proves the compiled automaton agrees with a standard validator, not merely with itself.
+`jsonschema` is an opt-in `validation` dependency (not a runtime dependency), so the core library
+stays zero-dependency and default CI skips the test via `pytest.importorskip`:
+
+```bash
+uv sync --group validation && uv run pytest tests/test_jsonschema_parity.py
+```
+
 ## Demonstration
 
 ```text
