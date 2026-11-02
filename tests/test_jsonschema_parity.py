@@ -15,8 +15,8 @@ against the library's own regex:
    ``fullmatch`` decision agrees document-for-document with ``jsonschema``.
 
 ``jsonschema`` is an optional ``validation`` dependency, not a runtime
-dependency, so this test is skipped when it is not installed and the core
-library stays zero dependency.
+dependency, so this test is skipped when it is not installed; the core
+library does not require it.
 """
 
 from __future__ import annotations

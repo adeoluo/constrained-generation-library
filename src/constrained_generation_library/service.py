@@ -1,4 +1,4 @@
-"""A dependency-free HTTP service for schema-constrained generation.
+"""A standard-library HTTP service for schema-constrained generation.
 
 The service compiles a default schema at startup. It validates arbitrary JSON
 against the schema's automaton, generates a schema-valid document from a seeded

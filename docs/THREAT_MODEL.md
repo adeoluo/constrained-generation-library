@@ -30,7 +30,7 @@
   and user text is matched by the automaton, not by the host regular-expression engine.
 
 ## Supply chain
-- Zero runtime dependencies. Development tooling is pinned via `uv.lock`. CodeQL and dependency
+- No third-party runtime packages. Development tooling is pinned via `uv.lock`. CodeQL and dependency
   scanning run in CI.
 
 ## Residual risk

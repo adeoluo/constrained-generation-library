@@ -1,7 +1,7 @@
 [project]
 name = "constrained-generation-library"
 version = "0.1.0"
-description = "A constrained structured-generation library built from scratch in pure Python, compiling schemas to token-level finite automata"
+description = "A constrained structured-generation library built from scratch in Python, compiling schemas to token-level finite automata"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -18,7 +18,7 @@ dev = [
 # Optional, opt-in only: the independent differential check in
 # tests/test_jsonschema_parity.py that validates constrained outputs and the
 # compiled automaton against the ``jsonschema`` reference validator. Not
-# installed by default CI, so the core library stays zero dependency.
+# installed by default CI and not required by the core library.
 # Run with: uv sync --group validation && uv run pytest tests/test_jsonschema_parity.py
 validation = [
     "jsonschema>=4.0",

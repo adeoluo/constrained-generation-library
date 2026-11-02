@@ -1,16 +1,14 @@
 <h1 align="center">Constrained Generation Library</h1>
 
 <p align="center">
-  <em>A structured-generation library built from scratch in pure Python. It compiles a JSON Schema into a finite automaton and masks a model's tokens so the output can only be valid. 100% valid JSON, by construction.</em>
+  <em>A structured-generation library built from scratch in Python that compiles a JSON Schema into a finite automaton and masks a model's tokens so the output is schema-valid by construction.</em>
 </p>
 
 <p align="center">
-  <a href="https://github.com/adeoluo/constrained-generation-library/actions/workflows/ci.yml"><img alt="Continuous integration" src="https://github.com/adeoluo/constrained-generation-library/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Coverage" src="https://img.shields.io/badge/coverage-91%25-brightgreen">
+  <a href="https://github.com/adeoluo/constrained-generation-library/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/adeoluo/constrained-generation-library/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/adeoluo/constrained-generation-library/releases"><img alt="Release" src="https://img.shields.io/github/v/release/adeoluo/constrained-generation-library"></a>
   <img alt="Python" src="https://img.shields.io/badge/python-3.11%20%7C%203.12-blue">
-  <img alt="Type checked" src="https://img.shields.io/badge/mypy-strict-blue">
-  <img alt="Runtime dependencies" src="https://img.shields.io/badge/runtime%20deps-0-brightgreen">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
 </p>
 
 ---
@@ -22,8 +20,7 @@ enum, a well-formed number) is usually attempted with prompting and retries, whi
 unpredictably. The reliable approach is to **constrain decoding**: at each step, only allow tokens
 that keep the output on a path to a valid document. This library implements that from scratch. It
 compiles a schema into a regular expression, compiles the expression into a finite automaton, and
-uses the automaton to mask the model's vocabulary so **invalid output is impossible**, with **zero
-runtime dependencies**.
+uses the automaton to mask the model's vocabulary so **invalid output is impossible**.
 
 The guarantee is not probabilistic. Across any model, constrained decoding here produces valid
 JSON **100% of the time**; the same models unconstrained produce it **0% of the time**.
@@ -31,7 +28,7 @@ JSON **100% of the time**; the same models unconstrained produce it **0% of the 
 ## Architecture
 
 <p align="center">
-  <img src="docs/architecture/architecture.svg" alt="System architecture" width="900">
+  <img src="docs/architecture/architecture.svg" alt="Architecture diagram" width="860">
 </p>
 
 A schema becomes a regular expression, which is parsed into a Thompson NFA and run as a lazy DFA
@@ -39,7 +36,7 @@ A schema becomes a regular expression, which is parsed into a Thompson NFA and r
 decoding, the automaton reports which tokens keep the output acceptable; the model's scores are
 masked to that set. See the [ADRs](docs/adr/) for the key decisions.
 
-## What it implements
+### What it implements
 
 - **A regular-expression engine** from scratch: parser, Thompson NFA construction, and a lazy DFA
   with literals, classes, the wildcard, escapes, ``* + ?``, alternation, and grouping.
@@ -79,8 +76,8 @@ mask that keeps generation on a legal path.
 
 Validity stays **100%** as the schema grows, because output is valid by construction; throughput
 falls because larger objects require more decoding steps, each masking the vocabulary against the
-automaton. Peak memory for a single 16-field generation is about 665 KiB. These are pure-Python
-numbers that show how the masking machinery scales, not competitive speed against a production
+automaton. Peak memory for a single 16-field generation is about 665 KiB. These numbers come from
+an interpreted Python decoder and show how the masking machinery scales, not competitive speed against a production
 constrained-decoding framework.
 
 ### Independent validation against jsonschema
@@ -100,25 +97,26 @@ validator used as an independent oracle:
 
 This proves the compiled automaton agrees with a standard validator, not merely with itself.
 `jsonschema` is an opt-in `validation` dependency (not a runtime dependency), so the core library
-stays zero-dependency and default CI skips the test via `pytest.importorskip`:
+does not require it and default CI skips the test via `pytest.importorskip`:
 
 ```bash
 uv sync --group validation && uv run pytest tests/test_jsonschema_parity.py
 ```
 
-## Demonstration
+### Evaluation
 
-```text
-$ python -m constrained_generation_library pattern
-\{"name":"([^"])?...","age":-?(0|[1-9]\d?\d?),"active":(true|false),"role":("admin"|"user"|"guest")\}
+Schemas, models, and generations are deterministic, so every number reproduces offline. Full
+method and tables: [`docs/EVALUATION_REPORT.md`](docs/EVALUATION_REPORT.md).
 
-$ python -m constrained_generation_library generate --seed 7
-generated: {"name":",9GajsaR","age":0,"active":true,"role":"user"}
-valid:     True
-```
+### Comparison scope
 
-The generated document parses as real JSON and matches the schema, even though the underlying
-"model" is assigning random scores to tokens.
+The results above compare constrained decoding against unconstrained decoding with random
+models over a bounded schema subset, not against an established constrained-decoding library.
+This project has **not** been benchmarked against [Outlines](https://github.com/dottxt-ai/outlines)
+or [Guidance](https://github.com/guidance-ai/guidance) on latency, schema coverage, or correctness
+over realistic tokenizer vocabularies, and it does not claim to beat them. What the result
+establishes is narrower and precise: automaton-based token masking makes output valid by
+construction. A controlled comparison against those libraries is the natural next step.
 
 ## Quickstart
 
@@ -148,7 +146,23 @@ result = constrained_generate(regex, default_vocab(), random_model(0))
 assert regex.fullmatch(result.text)
 ```
 
-## HTTP service
+## Usage
+
+### Demonstration
+
+```text
+$ python -m constrained_generation_library pattern
+\{"name":"([^"])?...","age":-?(0|[1-9]\d?\d?),"active":(true|false),"role":("admin"|"user"|"guest")\}
+
+$ python -m constrained_generation_library generate --seed 7
+generated: {"name":",9GajsaR","age":0,"active":true,"role":"user"}
+valid:     True
+```
+
+The generated document parses as real JSON and matches the schema, even though the underlying
+"model" is assigning random scores to tokens.
+
+### HTTP service
 
 A standard-library HTTP service compiles the schema at startup, then validates and generates. The
 routing logic is a pure function, tested without a socket.
@@ -170,26 +184,40 @@ routing logic is a pure function, tested without a socket.
   and guarantees that decoding completes, so validity is about complete documents, not just
   prefixes. See [ADR 0003](docs/adr/0003-bounded-fields.md).
 
-## Evaluation
+## Testing
 
-Schemas, models, and generations are deterministic, so every number reproduces offline. Full
-method and tables: [`docs/EVALUATION_REPORT.md`](docs/EVALUATION_REPORT.md).
+```bash
+make test                     # or: uv run pytest
+uv run pytest --cov=src --cov-report=term-missing --cov-fail-under=80
+
+# opt-in differential validation against jsonschema
+uv sync --group validation && uv run pytest tests/test_jsonschema_parity.py
+```
+
+The suite in `tests/` uses seeded models and is deterministic:
+
+- `test_constrained.py`: the regex engine (literals, classes, alternation, quantifiers,
+  negated classes, escapes, parse errors), schema compilation and JSON serialization of
+  property names and enum values, constrained generation that is always valid JSON,
+  unconstrained generation that is usually invalid, token rejection, and determinism.
+- `test_adversarial.py`: edge cases such as empty schemas, string length and integer digit
+  boundaries, leading zeros, fractional numbers, Unicode keys and values, escaping in keys
+  and enums, regex metacharacters, deep nesting, empty alternation branches, and malformed
+  patterns.
+- `test_service_cli.py`: the HTTP handler layer (`/health`, `/ready`, `/validate`,
+  `/generate`, `/report`, `/metrics`, validation errors, unknown routes) and the CLI commands.
+- `test_jsonschema_parity.py`: the opt-in differential test described under Results. It is
+  skipped unless the `validation` dependency group is installed.
+
+CI (`.github/workflows/ci.yml`) runs `ruff format --check`, `ruff check`, `mypy src`, and
+`pytest` with an 80% coverage gate on Python 3.11 and 3.12, then builds the package and the
+Docker image.
 
 ## Responsible AI
 
 - **Model card:** [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md)
 - **Data card:** [`docs/DATA_CARD.md`](docs/DATA_CARD.md)
 - **Threat model:** [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md)
-
-## Comparison scope
-
-The results above compare constrained decoding against unconstrained decoding with random
-models over a bounded schema subset, not against an established constrained-decoding library.
-This project has **not** been benchmarked against [Outlines](https://github.com/dottxt-ai/outlines)
-or [Guidance](https://github.com/guidance-ai/guidance) on latency, schema coverage, or correctness
-over realistic tokenizer vocabularies, and it does not claim to beat them. What the result
-establishes is narrower and precise: automaton-based token masking makes output valid by
-construction. A controlled comparison against those libraries is the natural next step.
 
 ## Limitations
 
@@ -214,4 +242,4 @@ construction. A controlled comparison against those libraries is the natural nex
 
 ## License
 
-[MIT](LICENSE)
+Released under the [MIT License](LICENSE).

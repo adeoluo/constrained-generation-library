@@ -3,7 +3,7 @@
 Compiles schemas of increasing size and runs many constrained generations,
 reporting wall-clock time, generation throughput, and the fraction of outputs
 that are valid JSON by construction, plus a one-off peak-memory measurement. This
-is a pure-Python decoder, so the throughput measures how the masking machinery
+is an interpreted Python decoder, so the throughput measures how the masking machinery
 scales, not competitive speed against a production constrained-decoding
 framework. Deterministic and offline; run with:
 
@@ -34,7 +34,7 @@ def _schema(n_properties: int) -> list[Property]:
 def main() -> None:
     vocab = default_vocab()
     print(
-        "Constrained generation at scale (pure-Python masking; throughput measures "
+        "Constrained generation at scale (interpreted Python masking; throughput measures "
         "scaling, not competitive speed against a production framework):"
     )
     for n_properties, trials in ((4, 60), (8, 40), (12, 30), (16, 20)):

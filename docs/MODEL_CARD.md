@@ -2,8 +2,7 @@
 
 ## Overview
 - **What it is:** a from-scratch structured-generation library that compiles a JSON Schema into a
-  finite automaton and masks a model's tokens so output is schema-valid by construction. No
-  third-party dependencies.
+  finite automaton and masks a model's tokens so output is schema-valid by construction.
 - **Base model:** none. A deterministic fake model stands in for a language model so the mechanism
   can be demonstrated offline.
 - **Version and date:** 0.1.0, 2026.

@@ -44,7 +44,7 @@ which is the mask doing its work.
 
 Each `/generate` call decodes a full document token by token, recomputing the allowed set at every
 step. Under a concurrent stress benchmark the handler sustains tens of requests per second with p50
-near 20 ms, which reflects pure-Python masking over the vocabulary at each step.
+near 20 ms, which reflects interpreted Python masking over the vocabulary at each step.
 
 ## Reproducibility
 
