@@ -196,6 +196,12 @@ The validity report: every output parses and matches its schema.
   <img src="docs/demo/report.gif" alt="The validity report: every output parses and matches its schema" width="860">
 </p>
 
+The HTTP service: validate a document, then generate a schema-valid one.
+
+<p align="center">
+  <img src="docs/demo/http.gif" alt="The HTTP service: validate a document, then generate a schema-valid one" width="860">
+</p>
+
 ## Design decisions
 
 - **A lazy DFA over NFA state sets** - computing transitions on demand avoids enumerating the
