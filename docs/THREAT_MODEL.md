@@ -30,8 +30,7 @@
   and user text is matched by the automaton, not by the host regular-expression engine.
 
 ## Supply chain
-- No third-party runtime packages. Development tooling is pinned via `uv.lock`. CodeQL and dependency
-  scanning run in CI.
+- No third-party runtime packages. Development tooling is pinned via `uv.lock`. CodeQL runs in CI.
 
 ## Residual risk
 - Generation is CPU-intensive; a flood of `/generate` requests could exhaust CPU. A production
