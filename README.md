@@ -180,6 +180,22 @@ routing logic is a pure function, tested without a socket.
 | POST | `/generate` | body `{"seed": int?}`; a schema-valid document from a seeded model |
 | GET | `/report` | validity rate with and without the constraint over random models |
 
+### Demos
+
+Recorded from real runs with [vhs](https://github.com/charmbracelet/vhs); each tape is in `docs/demo/`.
+
+Schema-constrained generation and a regex-constrained pattern.
+
+<p align="center">
+  <img src="docs/demo/generate.gif" alt="Schema-constrained generation and a regex-constrained pattern" width="860">
+</p>
+
+The validity report: every output parses and matches its schema.
+
+<p align="center">
+  <img src="docs/demo/report.gif" alt="The validity report: every output parses and matches its schema" width="860">
+</p>
+
 ## Design decisions
 
 - **A lazy DFA over NFA state sets** - computing transitions on demand avoids enumerating the
