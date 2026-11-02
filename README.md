@@ -31,10 +31,14 @@ JSON **100% of the time**; the same models unconstrained produce it **0% of the 
   <img src="docs/architecture/architecture.svg" alt="Architecture diagram" width="860">
 </p>
 
+<sub>Legend: amber = entry points and external systems, indigo = core logic, green = data and state, blue = validation and control, grey = observability and outputs.</sub>
+
 A schema becomes a regular expression, which is parsed into a Thompson NFA and run as a lazy DFA
 (each state is an epsilon-closed set of NFA states, transitions computed on demand). During
 decoding, the automaton reports which tokens keep the output acceptable; the model's scores are
-masked to that set. See the [ADRs](docs/adr/) for the key decisions.
+masked to that set and the best allowed token is chosen greedily. The HTTP service validates its
+inputs, checks documents against the compiled automaton, generates from a seeded model, and reports
+the validity rate with and without the constraint alongside Prometheus metrics. See the [ADRs](docs/adr/) for the key decisions.
 
 ### What it implements
 

@@ -1,40 +1,62 @@
-flowchart TD
+flowchart LR
     classDef edge     fill:#F59E0B,stroke:#1E293B,color:#1E293B,stroke-width:1px;
     classDef core     fill:#6366F1,stroke:#1E293B,color:#ffffff,stroke-width:1px;
     classDef data     fill:#10B981,stroke:#1E293B,color:#ffffff,stroke-width:1px;
     classDef control  fill:#0EA5E9,stroke:#1E293B,color:#ffffff,stroke-width:1px;
     classDef obs      fill:#CBD5E1,stroke:#1E293B,color:#1E293B,stroke-width:1px;
 
-    Client([Client]):::edge
+    Client(["HTTP client"]):::edge
+    CLI(["CLI<br/>pattern, generate, report, serve"]):::edge
+    Model[["Model score function<br/>seeded random or any scorer"]]:::edge
+
+    subgraph Interfaces["Interfaces (stdlib HTTP service)"]
+        direction TB
+        Router["Router<br/>/validate, /generate, /report, /metrics"]:::edge
+        Validate["Validation<br/>text up to 4,000 chars, seed range"]:::control
+    end
 
     subgraph Compile["Schema compilation (once)"]
         direction TB
-        Schema[(JSON Schema<br/>typed, ordered properties)]:::data
-        Pattern["Regular expression"]:::core
-        NFA["Thompson NFA"]:::core
-        DFA["Lazy DFA<br/>epsilon-closed state sets"]:::core
+        Pattern["schema_to_pattern<br/>compact JSON regex, number grammar"]:::core
+        Regex["Regex engine<br/>parser + Thompson NFA, lazy DFA steps"]:::core
     end
 
     subgraph Decode["Constrained decoding (per token)"]
         direction TB
-        Model["Model scores<br/>over the vocabulary"]:::obs
-        Mask["Token mask<br/>keep tokens the automaton can still accept"]:::core
-        Pick["Pick highest-scoring allowed token"]:::control
-        Advance["Advance the automaton"]:::core
+        Mask["Constraint.allowed_ids<br/>tokens that avoid dead states,<br/>EOS only when accepting"]:::control
+        Pick["Greedy pick<br/>best-scoring allowed token"]:::core
+        Advance["Advance<br/>feed token characters"]:::core
     end
 
-    subgraph Edge["Service layer (stdlib HTTP)"]
+    subgraph State["Data and state"]
         direction TB
-        Router["Router<br/>/health | /ready | /metrics | /validate | /generate | /report"]:::core
-        Validate["Validation<br/>bounded text, non-negative seed"]:::control
+        Schema[("Schema properties<br/>string, integer, number, boolean, enum")]:::data
+        Vocab[("Token vocabulary<br/>with end-of-sequence")]:::data
+        Closure[("Epsilon-closure cache<br/>DFA states as NFA sets")]:::data
     end
 
-    Result["Schema-valid document"]:::obs
+    subgraph Evaluation["Evaluation and outputs"]
+        direction TB
+        Doc["Generated document<br/>fullmatch checked"]:::obs
+        Report["ValidityReport<br/>constrained vs unconstrained,<br/>allowed fraction"]:::obs
+        Metrics["ServiceMetrics<br/>Prometheus"]:::obs
+    end
 
-    Schema --> Pattern --> NFA --> DFA
-    Model --> Mask --> Pick --> Advance
-    DFA -.->|allowed set| Mask
-    Advance -.->|next state| Mask
-    Client -->|request| Router --> Validate --> Decode
-    Advance --> Result
-    Result --> Router -->|JSON response| Client
+    Client -->|JSON request| Router
+    CLI -->|serve| Router
+    CLI -->|generate, report| Mask
+    Router --> Validate
+    Validate -->|seed| Mask
+    Validate -->|text to validate| Regex
+    Pattern -->|pattern| Regex
+    Pattern -.->|reads| Schema
+    Regex -.->|start state, step| Mask
+    Mask -->|allowed ids| Pick
+    Model -.->|scores| Pick
+    Pick -->|token| Advance
+    Regex -.->|step| Advance
+    Regex -.-> Closure
+    Mask -.-> Vocab
+    Advance -->|text| Doc
+    Doc -->|validity per trial| Report
+    Router -.-> Metrics
