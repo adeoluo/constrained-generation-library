@@ -5,58 +5,43 @@ flowchart LR
     classDef control  fill:#0EA5E9,stroke:#1E293B,color:#ffffff,stroke-width:1px;
     classDef obs      fill:#CBD5E1,stroke:#1E293B,color:#1E293B,stroke-width:1px;
 
-    Client(["HTTP client"]):::edge
-    CLI(["CLI<br/>pattern, generate, report, serve"]):::edge
-    Model[["Model score function<br/>seeded random or any scorer"]]:::edge
-
-    subgraph Interfaces["Interfaces (stdlib HTTP service)"]
+    subgraph Interfaces["Interfaces"]
         direction TB
-        Router["Router<br/>/validate, /generate, /report, /metrics"]:::edge
-        Validate["Validation<br/>text up to 4,000 chars, seed range"]:::control
-    end
-
-    subgraph Compile["Schema compilation (once)"]
-        direction TB
-        Pattern["schema_to_pattern<br/>compact JSON regex, number grammar"]:::core
-        Regex["Regex engine<br/>parser + Thompson NFA, lazy DFA steps"]:::core
-    end
-
-    subgraph Decode["Constrained decoding (per token)"]
-        direction TB
-        Mask["Constraint.allowed_ids<br/>tokens that avoid dead states,<br/>EOS only when accepting"]:::control
-        Pick["Greedy pick<br/>best-scoring allowed token"]:::core
-        Advance["Advance<br/>feed token characters"]:::core
+        Client([HTTP client]):::edge
+        CLI(["CLI<br/>generate, report, serve"]):::edge
+        Router["Router<br/>/validate, /generate"]:::edge
+        Validate["Validation<br/>text cap, seed range"]:::control
+        CLI ~~~ Client --> Router --> Validate
     end
 
     subgraph State["Data and state"]
         direction TB
-        Schema[("Schema properties<br/>string, integer, number, boolean, enum")]:::data
-        Vocab[("Token vocabulary<br/>with end-of-sequence")]:::data
-        Closure[("Epsilon-closure cache<br/>DFA states as NFA sets")]:::data
+        Schema[("Schema properties<br/>typed, ordered")]:::data
+        Vocab[("Token vocabulary<br/>with end of sequence")]:::data
+        Closure[("Closure cache<br/>lazy DFA states")]:::data
+        Schema ~~~ Vocab
+        Closure
     end
 
-    subgraph Evaluation["Evaluation and outputs"]
+    subgraph Core["Compile and decode"]
+        direction TB
+        Pattern["schema_to_pattern<br/>compact JSON regex"]:::core
+        Regex["Regex engine<br/>Thompson NFA, lazy DFA"]:::core
+        Mask["Token mask<br/>avoid dead states"]:::control
+        Model[["Model scores<br/>seeded or any scorer"]]:::edge
+        Pick["Greedy pick<br/>best allowed token"]:::core
+        Pattern --> Regex --> Mask --> Pick
+        Pick -.->|scores| Model
+    end
+
+    subgraph Obs["Evaluation and outputs"]
         direction TB
         Doc["Generated document<br/>fullmatch checked"]:::obs
-        Report["ValidityReport<br/>constrained vs unconstrained,<br/>allowed fraction"]:::obs
+        Report["ValidityReport<br/>with vs without mask"]:::obs
         Metrics["ServiceMetrics<br/>Prometheus"]:::obs
+        Doc --> Report ~~~ Metrics
     end
 
-    Client -->|JSON request| Router
-    CLI -->|serve| Router
-    CLI -->|generate, report| Mask
-    Router --> Validate
-    Validate -->|seed| Mask
-    Validate -->|text to validate| Regex
-    Pattern -->|pattern| Regex
-    Pattern -.->|reads| Schema
-    Regex -.->|start state, step| Mask
-    Mask -->|allowed ids| Pick
-    Model -.->|scores| Pick
-    Pick -->|token| Advance
-    Regex -.->|step| Advance
-    Regex -.-> Closure
-    Mask -.-> Vocab
-    Advance -->|text| Doc
-    Doc -->|validity per trial| Report
-    Router -.-> Metrics
+    Interfaces -->|seed or text| Core
+    State -.->|schema, vocab| Core
+    Core -->|tokens| Obs
