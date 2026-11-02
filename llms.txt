@@ -1,0 +1,33 @@
+# Constrained Generation Library
+
+> A structured-generation library built from scratch in Python that compiles a JSON Schema into a finite automaton and masks a model's tokens so the output is schema-valid by construction.
+
+Languages: Python. License: MIT. Source: https://github.com/adeoluo/constrained-generation-library
+
+## Docs
+
+- [README](https://github.com/adeoluo/constrained-generation-library/blob/main/README.md): motivation, architecture, results, quickstart, usage, design decisions, testing, responsible ai, limitations, roadmap
+- [AGENTS.md](https://github.com/adeoluo/constrained-generation-library/blob/main/AGENTS.md): layout, commands and conventions for changing the code
+- [Architecture diagram](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/architecture/architecture.mmd): Mermaid source of the component diagram
+- [Data Card - Constrained Generation Library](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/DATA_CARD.md)
+- [Definition of Done](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/DEFINITION_OF_DONE.md)
+- [Evaluation Report - Constrained Generation Library](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/EVALUATION_REPORT.md)
+- [Model / System Card - Constrained Generation Library](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/MODEL_CARD.md)
+- [Threat Model - Constrained Generation Library](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/THREAT_MODEL.md)
+- [ADR-0001: Record architecture decisions](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/adr/0001-record-architecture-decisions.md)
+- [ADR-0002: A lazy DFA over NFA state sets](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/adr/0002-lazy-dfa.md)
+- [ADR-0003: Bounded schema fields so decoding completes](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/adr/0003-bounded-fields.md)
+- [ADR-NNNN: <short title>](https://github.com/adeoluo/constrained-generation-library/blob/main/docs/adr/template.md)
+- [Changelog](https://github.com/adeoluo/constrained-generation-library/blob/main/CHANGELOG.md): release history
+
+## Source
+
+- [src/constrained_generation_library/__init__.py](https://github.com/adeoluo/constrained-generation-library/blob/main/src/constrained_generation_library/__init__.py): Constrained Generation Library - schema-constrained decoding from scratch.
+- [src/constrained_generation_library/cli.py](https://github.com/adeoluo/constrained-generation-library/blob/main/src/constrained_generation_library/cli.py): Command line interface for the constrained generation library.
+- [src/constrained_generation_library/constrainer.py](https://github.com/adeoluo/constrained-generation-library/blob/main/src/constrained_generation_library/constrainer.py): Token-level constraint masking and constrained decoding.
+- [src/constrained_generation_library/data.py](https://github.com/adeoluo/constrained-generation-library/blob/main/src/constrained_generation_library/data.py): A token vocabulary and deterministic fake models for demonstration.
+- [src/constrained_generation_library/evaluation.py](https://github.com/adeoluo/constrained-generation-library/blob/main/src/constrained_generation_library/evaluation.py): Evaluation: validity rate with and without the constraint, and selectivity.
+- [src/constrained_generation_library/observability.py](https://github.com/adeoluo/constrained-generation-library/blob/main/src/constrained_generation_library/observability.py): In-process request metrics for the HTTP service (Prometheus text exposition).
+- [src/constrained_generation_library/regex.py](https://github.com/adeoluo/constrained-generation-library/blob/main/src/constrained_generation_library/regex.py): A small regular-expression engine: parse to an NFA, then run a lazy DFA.
+- [src/constrained_generation_library/schema.py](https://github.com/adeoluo/constrained-generation-library/blob/main/src/constrained_generation_library/schema.py): Compile a small JSON Schema into a regular expression for compact JSON.
+- [src/constrained_generation_library/service.py](https://github.com/adeoluo/constrained-generation-library/blob/main/src/constrained_generation_library/service.py): A standard-library HTTP service for schema-constrained generation.
