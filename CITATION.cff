@@ -1,10 +1,22 @@
 cff-version: 1.2.0
-message: "If you use this work, please cite it."
+message: "If you use this software, please cite it as below."
+type: software
 title: "Constrained Generation Library"
+abstract: "A structured-generation library built from scratch in Python: compiles a JSON Schema into a finite automaton and masks a model's tokens so output is schema-valid by construction (100% valid JSON across any model versus 0% unconstrained)."
 authors:
   - family-names: "Ogunnoiki"
     given-names: "Adeolu"
-version: 0.1.0
-date-released: 2026-01-01
+version: "0.1.0"
+date-released: "2026-11-02"
 license: MIT
+repository-code: "https://github.com/adeoluo/constrained-generation-library"
 url: "https://github.com/adeoluo/constrained-generation-library"
+keywords:
+  - "constrained-decoding"
+  - "finite-automata"
+  - "from-scratch"
+  - "json-schema"
+  - "llm"
+  - "python"
+  - "regex"
+  - "structured-generation"
